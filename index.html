@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo</title>
+</head>
+
+<body>
+    <fieldset>
+        <legend>Add Task</legend>
+        <input type="text" placeholder="add your todo" id="todo" />
+        <input type="date" name="" id="todo-date">
+        <select name="" id="category-select" >
+            <option disabled selected>Select your option</option>
+        </select>
+        <button onclick="onAdd()">Add</button> 
+    </fieldset>
+
+    <fieldset>
+        <legend>Add Category</legend>
+        <input type="text" placeholder="category" id="category">
+        <button onclick="addCategory()">Add Category</button>
+    </fieldset>
+
+    <fieldset>
+        <legend>Search</legend>
+        <input type="text" name="" id="search" placeholder="search" oninput="searchFunc()">
+    </fieldset>
+
+    <fieldset>
+        <legend>Filter By</legend>
+        <h5>Date: (less than)</h5>
+        <input type="date" name="" id="date">
+        <h5>Category:</h5>
+        <select name="" id="filter-category" >
+            <option disabled selected>Select your option</option>
+        </select>
+        <button onclick="filterTodos()">Filter</button>
+    </fieldset>
+
+    <fieldset>
+        <legend>Edit or Delete Category</legend>
+        <select name="" id="edit-category" onchange="renderCatText()" >
+            <option disabled selected>Select your option</option>
+        </select>
+        <input type="text" id="edit-input">
+        <button onclick="editCat()">Edit</button>
+        <button onclick="deleteCat()">Delete</button>
+    </fieldset>
+
+    <fieldset>
+        <legend>Todos</legend>
+        <div id="todo-list"></div>
+    </fieldset>
+
+    
+    <script defer>
+        let todos = []
+        let categories = []
+        let categorySelect = document.getElementById("category-select")
+        let editCategory = document.getElementById("edit-category")
+        let filerCategorySelect = document.getElementById("filter-category")
+        let editCategorySelect = document.getElementById("edit-category")
+        let todoList = document.getElementById("todo-list");
+
+        function editCat(){
+            let opt = editCategory.value;
+            let ind = categories.findIndex((c)=>c===opt)
+            let editInput = document.getElementById("edit-input");
+            categories[ind] = editInput.value
+            editInput.value = ""
+            renderCat()
+        }
+
+        function renderCatText() {
+            let opt = editCategory.value;
+            let ind = categories.findIndex((c)=>c===opt)
+            let editInput = document.getElementById("edit-input")
+            editInput.value = categories[ind]
+        }
+
+        function deleteCat() {
+            let opt = editCategory.value;
+            let ind = categories.findIndex((c)=>c===opt)
+            categories.splice(ind,1)
+            renderCat()
+        }
+
+        function renderCat(){
+            categorySelect.innerHTML = "<option disabled selected>Select your option</option>"
+            filerCategorySelect.innerHTML = "<option disabled selected>Select your option</option>"
+            editCategory.innerHTML = "<option disabled selected>Select your option</option>"
+            categories.forEach((cat) => {
+                    categorySelect.innerHTML += `<option value=${cat}>${cat}</option>`
+                    filerCategorySelect.innerHTML += `<option value=${cat}>${cat}</option>`
+                    editCategorySelect.innerHTML += `<option value=${cat}>${cat}</option>`
+                })
+        }
+
+        function getTodoElement(i, todo) {
+            if (todo.status) {
+                return `<div id=${i}> 
+                            <span><s> ${todo.name}</s></span> 
+                            <span>${todo.category}</span>
+                            <input checked type="checkbox" onclick="onChecked(${i})"> 
+                            <span>${todo.date}</span>  
+                            <button onclick="onDelete(${i})">Delete</button>
+                        </div>`
+            }
+            else {
+                return `<div id=${i}> 
+                            <span> ${todo.name}</span> 
+                            <span>${todo.category}</span>
+                            <input type="checkbox" onclick="onChecked(${i})">
+                            <span>${todo.date}</span> 
+                            <button onclick="onDelete(${i})">Delete</button>
+                        </div>`
+            }
+        }
+
+        function addCategory() {
+            let cat = document.getElementById("category")
+            if (!categories.includes(cat.value.toLowerCase())) {
+                categories.push(cat.value)
+            }
+            else {
+                alert("Already exists")
+            }
+            cat.value = ""
+            renderCat()
+        }
+
+        let checker = (target, arr) => target.every(v => arr.includes(v));
+
+        function filterTodos() {
+            let selectedDate = document.getElementById("date").value;
+            let filterCatSelect = document.getElementById("filter-category")
+            let opt = filterCatSelect.value
+            todoList.innerHTML = ""
+            todos.forEach((todo, i) => {
+                if (todo.category == opt && new Date(todo.date) <= new Date(selectedDate)) {
+                    todoList.innerHTML += getTodoElement(i, todo);
+                }
+            })
+        }
+
+        function onChecked(i) {
+            todos[i].status = !todos[i].status;
+            let t = document.getElementById(i).childNodes[1]
+            let text = t.innerText
+            if (todos[i].status) {
+                t.innerHTML = text.strike();
+            }
+            else {
+                t.innerHTML = text;
+            }
+
+        }
+
+        function display() {
+            todoList.innerHTML = ""
+            todos.forEach((todo, i) => {
+                todoList.innerHTML += getTodoElement(i, todo);
+            })
+        }
+
+        function onAdd() {
+            let todo = document.getElementById("todo");
+            let date = document.getElementById("todo-date");
+            let opt = categorySelect.value
+
+            let newTodo = {
+                name: todo.value,
+                status: false,
+                category: opt,
+                date: date.value === "" ? new Date().toJSON().slice(0, 10) : date.value
+            }
+            todos.push(newTodo);
+            todo.value = ""
+            date.value = ""
+            categorySelect.value = ""
+            display();
+        }
+
+        function onDelete(i) {
+            todos.splice(i, 1);
+            display();
+        }
+
+        function searchFunc() {
+            let queryText = document.getElementById("search").value;
+            todoList.innerHTML = ""
+            todos.forEach((todo, i) => {
+                if (todo.name.includes(queryText)) {
+                    todoList.innerHTML += getTodoElement(i, todo);
+                }
+            })
+        }
+    </script>
+</body>
+
+</html>
